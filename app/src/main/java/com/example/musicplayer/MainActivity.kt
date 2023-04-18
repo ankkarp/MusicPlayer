@@ -29,27 +29,36 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainContent() {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Audio Player", color = Color.White) }, backgroundColor = Color(0xffFF7314)) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Audio Player", color = Color.White) },
+                backgroundColor = Color(0xffFF7314)
+            )
+        },
         content = { MyContent() }
     )
 }
 
 @Composable
-fun MyContent(){
+fun MyContent() {
 
-    val mContext = LocalContext.current
+    val mainContext = LocalContext.current
 
-    val mMediaPlayer = MediaPlayer.create(mContext, R.raw.audio)
+    val mediaPlayer = MediaPlayer.create(mainContext, R.raw.audio)
 
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
         Row {
-            IconButton(onClick = { mMediaPlayer.start() }) {
-                Icon(painter = painterResource(id = R.drawable.ic_play), contentDescription = "", Modifier.size(32.dp))
-            }
-
-            IconButton(onClick = { mMediaPlayer.pause() }) {
-                Icon(painter = painterResource(id = R.drawable.ic_pause), contentDescription = "", Modifier.size(32.dp))
+            IconButton(onClick = { if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.start()}) {
+                Icon(
+                    painter = painterResource(id = if (mediaPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
+                    contentDescription = "",
+                    Modifier.size(32.dp)
+                )
             }
         }
     }
