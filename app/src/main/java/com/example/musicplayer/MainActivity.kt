@@ -1,15 +1,12 @@
 package com.example.musicplayer
 
-import android.Manifest
-import android.content.pm.PackageManager
+//import com.google.accompanist.permissions.PermissionRequired
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import com.example.musicplayer.view.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.ui.PlayerControlView
 
 class MainActivity : ComponentActivity() {
 //    private val permissionsRequired = arrayOf(
@@ -42,18 +41,23 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainContent() {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Audio Player", color = Color.White) },
-                    backgroundColor = Color(0xffFF7314)
-                )
-            },
-            content = { MyContent() }
-        )
+    val context = LocalContext.current
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Audio Player", color = Color.White) },
+                backgroundColor = BackgroundColor,
+            )
+        },
+        backgroundColor = BackgroundColor,
+        content = { MyContent() },
+        bottomBar = {
+            PlayerControlView(context)
+        }
+    )
 }
 
 fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
@@ -64,6 +68,63 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
         }
     }
     return items.toList()
+}
+//@Composable
+//fun AppBar(){
+//            Text(
+//                "b",
+//                color = TextDimmerColor,
+//                overflow = TextOverflow.Ellipsis,
+//                maxLines = 1
+//            )
+//        DrawableIconButton(
+//            icon = R.drawable.ic_addtoqueue,
+//            iconSize = 32.dp,
+//            iconColor = AccentColor1
+//        ) {}
+//        DrawableIconButton(
+//            icon = R.drawable.ic_more,
+//            iconSize = 32.dp,
+//            iconColor = AccentColor1
+//        ) {}
+//}
+
+@Composable
+fun musicPlaylistItem(musicItem: Music) {
+    Row(modifier = Modifier.fillMaxWidth().background(LighterColor)) {
+        DrawableIconButton(
+            icon = R.drawable.ic_play,
+            iconSize = 32.dp,
+            iconColor = AccentColor1,
+            onclick = {}
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                musicItem.title,
+                color = TextDimmerColor,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+            Text(
+                musicItem.artist,
+                color = TextDimmerColor,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+        }
+        DrawableIconButton(
+            icon = R.drawable.ic_addtoqueue,
+            iconSize = 32.dp,
+            iconColor = AccentColor1,
+            onclick = {}
+        )
+        DrawableIconButton(
+            icon = R.drawable.ic_more,
+            iconSize = 32.dp,
+            iconColor = AccentColor1,
+            onclick = {}
+        )
+    }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -103,21 +164,30 @@ fun MyContent() {
                 }.toList()
             } ?: emptyList()
         }
-        LazyColumn {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(1.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             items(musicFiles) { music ->
-                Text(music.title)
+                musicPlaylistItem(music)
             }
         }
-    }
-    else {
+    } else {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(1.dp),
             contentAlignment = Alignment.Center
         )
         {
             Column {
                 Text("Нет доступа к файловой системе.")
-                Button(onClick = { fsPermissionState.launchPermissionRequest() }, modifier = Modifier.width(200.dp)) {
+                Button(
+                    onClick = { fsPermissionState.launchPermissionRequest() },
+                    modifier = Modifier.width(200.dp)
+                ) {
                     Text("Предоставить доступ к памяти устройства")
                 }
             }
