@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.example.musicplayer.view.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerControlView
 
@@ -45,12 +47,30 @@ class MainActivity : ComponentActivity() {
 fun MainContent() {
     val context = LocalContext.current
 
+    val systemUiController = rememberSystemUiController()
+//    val useDarkIcons = !isSystemInDarkTheme()
+
+    DisposableEffect(systemUiController) {
+        // Update all of the system bar colors to be transparent, and use
+        // dark icons if we're in light theme
+        systemUiController.setSystemBarsColor(
+            color = BackgroundColor,
+//            darkIcons = useDarkIcons
+        )
+
+        systemUiController.setNavigationBarColor(
+            color = BackgroundColor,
+//            darkIcons = useDarkIcons
+        )
+
+        // setStatusBarColor() and setNavigationBarColor() also exist
+
+        onDispose {}
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Audio Player", color = Color.White) },
-                backgroundColor = BackgroundColor,
-            )
+            AppBar()
         },
         backgroundColor = BackgroundColor,
         content = { MyContent() },
@@ -69,34 +89,46 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
     }
     return items.toList()
 }
-//@Composable
-//fun AppBar(){
-//            Text(
-//                "b",
-//                color = TextDimmerColor,
-//                overflow = TextOverflow.Ellipsis,
-//                maxLines = 1
-//            )
-//        DrawableIconButton(
-//            icon = R.drawable.ic_addtoqueue,
-//            iconSize = 32.dp,
-//            iconColor = AccentColor1
-//        ) {}
-//        DrawableIconButton(
-//            icon = R.drawable.ic_more,
-//            iconSize = 32.dp,
-//            iconColor = AccentColor1
-//        ) {}
-//}
+@Composable
+fun AppBar(){
+    Row(modifier = Modifier.fillMaxWidth().height(80.dp).padding(10.dp),
+    horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            "b",
+            color = TextDimmerColor,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+        )
+        Row(){
+            DrawableIconButton(
+                icon = R.drawable.ic_locate,
+                iconSize = 32.dp,
+                iconColor = AccentColor2,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_refresh,
+                iconSize = 32.dp,
+                iconColor = AccentColor2,
+                onClick = {}
+            )
+        }
+    }
+}
 
 @Composable
 fun musicPlaylistItem(musicItem: Music) {
-    Row(modifier = Modifier.fillMaxWidth().background(LighterColor)) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .height(49.dp)
+        .background(LighterColor),
+        verticalAlignment = Alignment.Top
+    ) {
         DrawableIconButton(
             icon = R.drawable.ic_play,
-            iconSize = 32.dp,
+            iconSize = 29.dp,
             iconColor = AccentColor1,
-            onclick = {}
+            onClick = {}
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -114,15 +146,15 @@ fun musicPlaylistItem(musicItem: Music) {
         }
         DrawableIconButton(
             icon = R.drawable.ic_addtoqueue,
-            iconSize = 32.dp,
+            iconSize = 29.dp,
             iconColor = AccentColor1,
-            onclick = {}
+            onClick = {}
         )
         DrawableIconButton(
             icon = R.drawable.ic_more,
-            iconSize = 32.dp,
+            iconSize = 29.dp,
             iconColor = AccentColor1,
-            onclick = {}
+            onClick = {}
         )
     }
 }
@@ -168,7 +200,7 @@ fun MyContent() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(1.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(musicFiles) { music ->
                 musicPlaylistItem(music)
