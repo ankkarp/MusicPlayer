@@ -91,14 +91,12 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
 }
 @Composable
 fun AppBar(){
-    Row(modifier = Modifier.fillMaxWidth().height(80.dp).padding(10.dp),
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .height(80.dp)
+        .padding(10.dp),
     horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(
-            "b",
-            color = TextDimmerColor,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
-        )
+        PlayListSelect()
         Row(){
             DrawableIconButton(
                 icon = R.drawable.ic_locate,
@@ -112,6 +110,53 @@ fun AppBar(){
                 iconColor = AccentColor2,
                 onClick = {}
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun PlayListSelect(){
+    val options = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5")
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOptionText by remember { mutableStateOf(options[0]) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            expanded = !expanded
+        }
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOptionText,
+            onValueChange = { },
+            label = { Text("Label") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            },
+            colors = ExposedDropdownMenuDefaults.textFieldColors(textColor = TextColor,
+            trailingIconColor = TextColor, focusedLabelColor = TextDimmerColor,
+                unfocusedLabelColor = TextDimmerColor)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOptionText = selectionOption
+                        expanded = false
+                    }
+                ){
+                    Text(text = selectionOption)
+                }
+            }
         }
     }
 }
