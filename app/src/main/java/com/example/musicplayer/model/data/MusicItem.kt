@@ -10,5 +10,6 @@ data class MusicItem(
     val title: String,
     val artist: String,
     val albumId: Long,
-    val playlistId: Long = 1
+    val playlistId: Long = 1,
+    val isActive: Boolean = false,
 )
