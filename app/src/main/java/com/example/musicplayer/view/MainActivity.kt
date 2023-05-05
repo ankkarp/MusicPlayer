@@ -1,6 +1,7 @@
 package com.example.musicplayer.view
 
 //import com.google.accompanist.permissions.PermissionRequired
+import android.content.Context
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.MediaStore
@@ -20,13 +21,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayer.R
-import com.example.musicplayer.model.dao.MusicDao
 import com.example.musicplayer.model.data.MusicItem
 import com.example.musicplayer.model.database.MusicDatabase
 import com.example.musicplayer.model.repository.MusicRepository
 import com.example.musicplayer.view.*
 import com.example.musicplayer.viewmodel.MusicViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.ui.PlayerControlView
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainContent() {
     val context = LocalContext.current
@@ -73,12 +75,18 @@ fun MainContent() {
         onDispose {}
     }
 
+    val viewModel = MusicViewModel(MusicRepository(
+        MusicDatabase.getDatabase(LocalContext.current).musicDao()))
+    val fsPermissionState = rememberPermissionState(
+        android.Manifest.permission.READ_EXTERNAL_STORAGE
+    )
+
     Scaffold(
         topBar = {
-            AppBar()
+            AppBar(viewModel, fsPermissionState)
         },
         backgroundColor = BackgroundColor,
-        content = { MyContent() },
+        content = { MyContent(viewModel, fsPermissionState) },
         bottomBar = {
             PlayerControlView(context)
         }
@@ -95,13 +103,16 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
     return items.toList()
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun AppBar(){
+fun AppBar(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
     Row(modifier = Modifier
         .fillMaxWidth()
         .height(80.dp)
         .padding(10.dp),
     horizontalArrangement = Arrangement.SpaceBetween) {
+        val mainContext = LocalContext.current
+
         PlayListSelect()
         Row(){
             DrawableIconButton(
@@ -114,7 +125,7 @@ fun AppBar(){
                 icon = R.drawable.ic_refresh,
                 iconSize = 32.dp,
                 iconColor = AccentColor2,
-                onClick = {}
+                onClick = {loadMusic(context = mainContext, musicViewModel = viewModel)}
             )
         }
     }
@@ -210,48 +221,44 @@ fun musicPlaylistItem(musicItem: MusicItem) {
     }
 }
 
+fun loadMusic(context: Context, musicViewModel: MusicViewModel){
+    val musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+    val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+    val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
+    val projection = arrayOf(
+        MediaStore.Audio.Media._ID,
+        MediaStore.Audio.Media.TITLE,
+        MediaStore.Audio.Media.ARTIST,
+        MediaStore.Audio.Media.ALBUM_ID
+    )
+    val cursor = context.contentResolver.query(
+        musicUri,
+        projection,
+        selection,
+        null,
+        sortOrder
+    )
+    val musicFiles = cursor?.use {
+        it.map { cursor ->
+            MusicItem(
+                id = cursor.getLong(0),
+                title = cursor.getString(1),
+                artist = cursor.getString(2),
+                albumId = cursor.getLong(3)
+            )
+        }.toList()
+    } ?: emptyList()
+    musicViewModel.insertAll(musicFiles)
+}
+
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MyContent() {
-    val viewModel = MusicViewModel(MusicRepository(
-        MusicDatabase.getDatabase(LocalContext.current).musicDao()))
-    val mainContext = LocalContext.current
-    val fsPermissionState = rememberPermissionState(
-        android.Manifest.permission.READ_EXTERNAL_STORAGE
-    )
+fun MyContent(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
     val musicList by viewModel.allMusic.observeAsState(emptyList())
+    val mainContext = LocalContext.current
     if (fsPermissionState.hasPermission) {
-        val musicFiles = remember {
-            val musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-            val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
-            val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
-            val projection = arrayOf(
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM_ID
-            )
-            val cursor = mainContext.contentResolver.query(
-                musicUri,
-                projection,
-                selection,
-                null,
-                sortOrder
-            )
-            cursor?.use {
-                it.map { cursor ->
-                    MusicItem(
-                        id = cursor.getLong(0),
-                        title = cursor.getString(1),
-                        artist = cursor.getString(2),
-                        albumId = cursor.getLong(3)
-                    )
-                }.toList()
-            } ?: emptyList()
-        }
-
-        viewModel.insertAll(musicFiles)
-
+        loadMusic(mainContext, viewModel)
         if (musicList.isNotEmpty()){
             LazyColumn(
                 modifier = Modifier
