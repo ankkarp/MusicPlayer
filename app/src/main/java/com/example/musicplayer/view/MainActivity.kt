@@ -12,14 +12,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
+import androidx.compose.material.SliderDefaults.colors
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.musicplayer.R
 import com.example.musicplayer.model.data.MusicItem
 import com.example.musicplayer.model.database.MusicDatabase
@@ -33,19 +36,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.ui.PlayerControlView
 
 class MainActivity : ComponentActivity() {
-//    private val permissionsRequired = arrayOf(
-//        Manifest.permission.READ_EXTERNAL_STORAGE,
-//    )
-//    private val askPermissions = arrayListOf<String>()
-
-//    val database by lazy { MusicDatabase.getDatabase(this) }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-//            PermissionsComposeTheme {
             MainContent()
-//            }
         }
     }
 }
@@ -55,23 +49,15 @@ class MainActivity : ComponentActivity() {
 fun MainContent() {
     val context = LocalContext.current
     val systemUiController = rememberSystemUiController()
-//    val useDarkIcons = !isSystemInDarkTheme()
 
     DisposableEffect(systemUiController) {
-        // Update all of the system bar colors to be transparent, and use
-        // dark icons if we're in light theme
         systemUiController.setSystemBarsColor(
             color = BackgroundColor,
-//            darkIcons = useDarkIcons
         )
 
         systemUiController.setNavigationBarColor(
             color = BackgroundColor,
-//            darkIcons = useDarkIcons
         )
-
-        // setStatusBarColor() and setNavigationBarColor() also exist
-
         onDispose {}
     }
 
@@ -83,14 +69,85 @@ fun MainContent() {
 
     Scaffold(
         topBar = {
-            AppBar(viewModel, fsPermissionState)
+            AppBar(viewModel, fsPermissionState.hasPermission)
         },
         backgroundColor = BackgroundColor,
         content = { MyContent(viewModel, fsPermissionState) },
         bottomBar = {
-            PlayerControlView(context)
+            PlayerBottomBar(context, hasPermission = fsPermissionState.hasPermission)
         }
     )
+}
+
+@Composable
+fun PlayerSlider() {
+    var sliderPosition by remember { mutableStateOf(0f) }
+    Slider(value = sliderPosition, onValueChange = { sliderPosition = it },
+        colors = colors(thumbColor = playerButtonsColor, disabledThumbColor =  playerButtonsColor,
+            activeTrackColor = SliderColor, inactiveTrackColor = SliderColor
+        ))
+}
+
+@Composable
+fun PlayerBottomBar(context: Context, hasPermission: Boolean){
+    Column(modifier = Modifier.fillMaxWidth().background(DimmerAccentColor1).padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.Center) {
+        Text("...-...", modifier = Modifier.fillMaxWidth(),
+            color = TextColor, fontSize = 20.sp, textAlign = TextAlign.Center)
+        Row(modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween){
+            DrawableIconButton(
+                icon = R.drawable.ic_addtoplaylist,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_favourite,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {},
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_playprevious,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_play,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_playnext,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_shuffle,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+            DrawableIconButton(
+                icon = R.drawable.ic_repeat,
+                iconSize = 32.dp,
+                iconColor = playerButtonsColor,
+                enabled = hasPermission,
+                onClick = {}
+            )
+        }
+        PlayerSlider()
+    }
 }
 
 fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
@@ -103,9 +160,8 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
     return items.toList()
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun AppBar(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
+fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
     Row(modifier = Modifier
         .fillMaxWidth()
         .height(80.dp)
@@ -119,13 +175,15 @@ fun AppBar(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
                 icon = R.drawable.ic_locate,
                 iconSize = 32.dp,
                 iconColor = AccentColor2,
+                enabled = hasPermission,
                 onClick = {}
             )
             DrawableIconButton(
                 icon = R.drawable.ic_refresh,
                 iconSize = 32.dp,
                 iconColor = AccentColor2,
-                onClick = {loadMusic(context = mainContext, musicViewModel = viewModel)}
+                enabled = hasPermission,
+                onClick = {loadMusic(context = mainContext, musicViewModel = viewModel)},
             )
         }
     }

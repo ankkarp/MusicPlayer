@@ -10,8 +10,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 
 @Composable
-fun DrawableIconButton(icon: Int, iconSize: Dp, iconColor: Color, onClick: () -> Unit){
-    IconButton(onClick = { onClick() }) {
+fun DrawableIconButton(icon: Int, iconSize: Dp, iconColor: Color,
+                       onClick: () -> Unit, enabled : Boolean = true){
+    IconButton(onClick = { onClick() }, enabled=enabled) {
         Icon(
             painter = painterResource(icon),
             contentDescription = "",
