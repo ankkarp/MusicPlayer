@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 
 class MusicViewModel(private val repository: MusicRepository) : ViewModel() {
     val allMusic: LiveData<List<MusicItem>> = repository.allMusic.asLiveData()
+    val activeMusicItem: LiveData<MusicItem> = repository.activeMusicItem.asLiveData()
 
     fun insert(music: MusicItem) = viewModelScope.launch {
         repository.insert(music)
@@ -18,8 +19,16 @@ class MusicViewModel(private val repository: MusicRepository) : ViewModel() {
         repository.insertAll(music)
     }
 
+    fun setActive(music: MusicItem, value: Boolean) = viewModelScope.launch {
+        repository.setActive(music, value)
+    }
+
     fun update(music: MusicItem) = viewModelScope.launch {
         repository.update(music)
+    }
+
+    fun updateAll(music: List<MusicItem>) = viewModelScope.launch {
+        repository.updateAll(music)
     }
 
     fun delete(music: MusicItem) = viewModelScope.launch {

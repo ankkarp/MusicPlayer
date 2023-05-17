@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PlaylistDao {
     @Query("SELECT * FROM music ORDER BY id ASC")
-    fun getAll(): Flow<MusicItem>
+    fun getPlaylist(): Flow<MusicItem>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(musicItem: MusicItem)

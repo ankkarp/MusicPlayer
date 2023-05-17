@@ -33,7 +33,6 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.exoplayer2.ui.PlayerControlView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,20 +60,37 @@ fun MainContent() {
         onDispose {}
     }
 
-    val viewModel = MusicViewModel(MusicRepository(
-        MusicDatabase.getDatabase(LocalContext.current).musicDao()))
+    val viewModel = MusicViewModel(
+        MusicRepository(
+            MusicDatabase.getDatabase(LocalContext.current).musicDao()
+        )
+    )
     val fsPermissionState = rememberPermissionState(
         android.Manifest.permission.READ_EXTERNAL_STORAGE
     )
+    val musicList by viewModel.allMusic.observeAsState(emptyList())
+    val activeMusicItem by viewModel.activeMusicItem.observeAsState()
 
     Scaffold(
         topBar = {
             AppBar(viewModel, fsPermissionState.hasPermission)
         },
         backgroundColor = BackgroundColor,
-        content = { MyContent(viewModel, fsPermissionState) },
+        content = {
+            MyContent(fsPermissionState = fsPermissionState,
+                onItemClick = { musicItem: MusicItem ->
+                    if (activeMusicItem != null) {
+                        viewModel.setActive(activeMusicItem!!, false)
+                    }
+                    viewModel.setActive(musicItem, true)
+                }, musicList = musicList
+            )
+        },
         bottomBar = {
-            PlayerBottomBar(context, hasPermission = fsPermissionState.hasPermission)
+            PlayerBottomBar(
+                hasPermission = fsPermissionState.hasPermission,
+                activeMusicItem = activeMusicItem
+            )
         }
     )
 }
@@ -82,20 +98,36 @@ fun MainContent() {
 @Composable
 fun PlayerSlider() {
     var sliderPosition by remember { mutableStateOf(0f) }
-    Slider(value = sliderPosition, onValueChange = { sliderPosition = it },
-        colors = colors(thumbColor = playerButtonsColor, disabledThumbColor =  playerButtonsColor,
+    Slider(
+        value = sliderPosition, onValueChange = { sliderPosition = it },
+        colors = colors(
+            thumbColor = playerButtonsColor, disabledThumbColor = playerButtonsColor,
             activeTrackColor = SliderColor, inactiveTrackColor = SliderColor
-        ))
+        )
+    )
 }
 
 @Composable
-fun PlayerBottomBar(context: Context, hasPermission: Boolean){
-    Column(modifier = Modifier.fillMaxWidth().background(DimmerAccentColor1).padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.Center) {
-        Text("...-...", modifier = Modifier.fillMaxWidth(),
-            color = TextColor, fontSize = 20.sp, textAlign = TextAlign.Center)
-        Row(modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween){
+fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(DimmerAccentColor1)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "%s - %s".format(activeMusicItem?.artist ?: "...", activeMusicItem?.title ?: "..."),
+            modifier = Modifier.fillMaxWidth(),
+            color = TextColor,
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             DrawableIconButton(
                 icon = R.drawable.ic_addtoplaylist,
                 iconSize = 32.dp,
@@ -162,15 +194,17 @@ fun <T> Cursor.map(f: (Cursor) -> T): List<T> {
 
 @Composable
 fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .height(80.dp)
-        .padding(10.dp),
-    horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .padding(10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         val mainContext = LocalContext.current
 
         PlayListSelect()
-        Row(){
+        Row {
             DrawableIconButton(
                 icon = R.drawable.ic_locate,
                 iconSize = 32.dp,
@@ -183,7 +217,7 @@ fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
                 iconSize = 32.dp,
                 iconColor = AccentColor2,
                 enabled = hasPermission,
-                onClick = {loadMusic(context = mainContext, musicViewModel = viewModel)},
+                onClick = { loadMusic(context = mainContext, musicViewModel = viewModel) },
             )
         }
     }
@@ -191,7 +225,7 @@ fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun PlayListSelect(){
+fun PlayListSelect() {
     val options = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5")
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf(options[0]) }
@@ -212,9 +246,11 @@ fun PlayListSelect(){
                     expanded = expanded
                 )
             },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(textColor = TextColor,
-                                                                trailingIconColor = TextColor, focusedLabelColor = TextDimmerColor,
-                unfocusedLabelColor = TextDimmerColor, )
+            colors = ExposedDropdownMenuDefaults.textFieldColors(
+                textColor = TextColor,
+                trailingIconColor = TextColor, focusedLabelColor = TextDimmerColor,
+                unfocusedLabelColor = TextDimmerColor,
+            )
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -228,7 +264,7 @@ fun PlayListSelect(){
                         selectedOptionText = selectionOption
                         expanded = false
                     }
-                ){
+                ) {
                     Text(text = selectionOption)
                 }
             }
@@ -237,18 +273,19 @@ fun PlayListSelect(){
 }
 
 @Composable
-fun musicPlaylistItem(musicItem: MusicItem) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .height(49.dp)
-        .background(LighterColor),
+fun musicPlaylistItem(musicItem: MusicItem, onItemClick: (MusicItem) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(49.dp)
+            .background(LighterColor),
         verticalAlignment = Alignment.Top
     ) {
         DrawableIconButton(
             icon = R.drawable.ic_play,
             iconSize = 29.dp,
             iconColor = AccentColor1,
-            onClick = {}
+            onClick = { onItemClick(musicItem) }
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -279,7 +316,7 @@ fun musicPlaylistItem(musicItem: MusicItem) {
     }
 }
 
-fun loadMusic(context: Context, musicViewModel: MusicViewModel){
+fun loadMusic(context: Context, musicViewModel: MusicViewModel) {
     val musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
     val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
     val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
@@ -312,12 +349,13 @@ fun loadMusic(context: Context, musicViewModel: MusicViewModel){
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MyContent(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
-    val musicList by viewModel.allMusic.observeAsState(emptyList())
-    val mainContext = LocalContext.current
+fun MyContent(
+    fsPermissionState: PermissionState, onItemClick: (MusicItem) -> Unit,
+    musicList: List<MusicItem>
+) {
     if (fsPermissionState.hasPermission) {
-        loadMusic(mainContext, viewModel)
-        if (musicList.isNotEmpty()){
+//        loadMusic(mainContext, viewModel)
+        if (musicList.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -325,11 +363,10 @@ fun MyContent(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(musicList) { music ->
-                    musicPlaylistItem(music)
+                    musicPlaylistItem(music, onItemClick = onItemClick)
                 }
             }
-        }
-        else{
+        } else {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -357,7 +394,6 @@ fun MyContent(viewModel: MusicViewModel, fsPermissionState: PermissionState) {
         )
         {
             Column {
-                Text("Нет доступа к файловой системе.")
                 Button(
                     onClick = { fsPermissionState.launchPermissionRequest() },
                     modifier = Modifier.width(200.dp)

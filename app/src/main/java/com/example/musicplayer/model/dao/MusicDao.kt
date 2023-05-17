@@ -9,6 +9,9 @@ interface MusicDao {
     @Query("SELECT * FROM music")
     fun getAll(): Flow<List<MusicItem>>
 
+    @Query("SELECT * FROM music WHERE isActive = true LIMIT 1")
+    fun getActive(): Flow<MusicItem>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(musicItem: MusicItem)
 
@@ -17,6 +20,9 @@ interface MusicDao {
 
     @Update
     suspend fun update(musicItem: MusicItem)
+
+    @Update
+    suspend fun updateAll(musicItem: List<MusicItem>)
 
     @Delete
     suspend fun delete(musicItem: MusicItem)
