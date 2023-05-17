@@ -12,4 +12,5 @@ data class MusicItem(
     val albumId: Long,
     val playlistId: Long = 1,
     val isActive: Boolean = false,
+    val uri: String,
 )

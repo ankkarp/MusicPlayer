@@ -1,6 +1,7 @@
 package com.example.musicplayer.view
 
 //import com.google.accompanist.permissions.PermissionRequired
+import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
 import android.os.Bundle
@@ -33,6 +34,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +74,27 @@ fun MainContent() {
     )
     val musicList by viewModel.allMusic.observeAsState(emptyList())
     val activeMusicItem by viewModel.activeMusicItem.observeAsState()
+    if (musicList.isNotEmpty()){
+        println(musicList[0])
+    }
+//    val player = remember { ExoPlayer.Builder(context).build() }
+//    val firstItem = MediaItem.fromUri(firstVideoUri)
+//    val secondItem = MediaItem.fromUri(secondVideoUri)
+//// Add the media items to be played.
+//    player.addMediaItem(firstItem)
+//    player.addMediaItem(secondItem)
+//// Prepare the player.
+//    player.prepare()
+//// Start the playback.
+//    player.play()
+
+    val musicUri = musicList.map {
+        ContentUris.withAppendedId(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            it.id
+        ).toString()
+    }
+
 
     Scaffold(
         topBar = {
@@ -77,7 +102,8 @@ fun MainContent() {
         },
         backgroundColor = BackgroundColor,
         content = {
-            MyContent(fsPermissionState = fsPermissionState,
+            MyContent(
+                fsPermissionState = fsPermissionState,
                 onItemClick = { musicItem: MusicItem ->
                     if (activeMusicItem != null) {
                         viewModel.setActive(activeMusicItem!!, false)
@@ -89,7 +115,8 @@ fun MainContent() {
         bottomBar = {
             PlayerBottomBar(
                 hasPermission = fsPermissionState.hasPermission,
-                activeMusicItem = activeMusicItem
+                activeMusicItem = activeMusicItem,
+//                player = player
             )
         }
     )
@@ -123,6 +150,7 @@ fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
+            maxLines = 1
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -153,8 +181,14 @@ fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
                 icon = R.drawable.ic_play,
                 iconSize = 32.dp,
                 iconColor = playerButtonsColor,
-                enabled = hasPermission,
-                onClick = {}
+                enabled = hasPermission && (activeMusicItem != null),
+                onClick = {
+                    ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        activeMusicItem!!.id
+                    ).toString()
+
+                }
             )
             DrawableIconButton(
                 icon = R.drawable.ic_playnext,
@@ -320,12 +354,14 @@ fun loadMusic(context: Context, musicViewModel: MusicViewModel) {
     val musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
     val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
     val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
+    println('a')
     val projection = arrayOf(
         MediaStore.Audio.Media._ID,
         MediaStore.Audio.Media.TITLE,
         MediaStore.Audio.Media.ARTIST,
-        MediaStore.Audio.Media.ALBUM_ID
+        MediaStore.Audio.Media.ALBUM_ID,
     )
+    println('b')
     val cursor = context.contentResolver.query(
         musicUri,
         projection,
@@ -333,17 +369,24 @@ fun loadMusic(context: Context, musicViewModel: MusicViewModel) {
         null,
         sortOrder
     )
+    println('c')
     val musicFiles = cursor?.use {
         it.map { cursor ->
             MusicItem(
                 id = cursor.getLong(0),
                 title = cursor.getString(1),
                 artist = cursor.getString(2),
-                albumId = cursor.getLong(3)
+                albumId = cursor.getLong(3),
+                uri = ContentUris.withAppendedId(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    cursor.getLong(0)
+                ).toString()
             )
         }.toList()
     } ?: emptyList()
+    println('d')
     musicViewModel.insertAll(musicFiles)
+    println('e')
 }
 
 
