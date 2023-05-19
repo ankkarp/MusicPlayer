@@ -45,13 +45,11 @@ fun loadMusic(context: Context, musicViewModel: MusicViewModel) {
                 artist = cursor.getString(2),
                 albumId = cursor.getLong(3),
                 uri = ContentUris.withAppendedId(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                     cursor.getLong(0)
                 ).toString()
             )
         }.toList()
     } ?: emptyList()
-    println('d')
     musicViewModel.insertAll(musicFiles)
-    println('e')
 }

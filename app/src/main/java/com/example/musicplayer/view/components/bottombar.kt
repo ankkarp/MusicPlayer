@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.musicplayer.R
 import com.example.musicplayer.model.data.MusicItem
 import com.example.musicplayer.viewmodel.MusicViewModel
@@ -30,7 +31,7 @@ fun PlayerSlider() {
 }
 
 @Composable
-fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
+fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?, player: ExoPlayer) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -39,7 +40,8 @@ fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            "%s - %s".format(activeMusicItem?.artist ?: "<unknown>", activeMusicItem?.title ?: "<unknown>"),
+            "%s - %s".format(activeMusicItem?.artist ?: "<unknown>",
+                activeMusicItem?.title ?: "<unknown>"),
             modifier = Modifier.fillMaxWidth(),
             color = TextColor,
             fontSize = 20.sp,
@@ -83,7 +85,8 @@ fun PlayerBottomBar(hasPermission: Boolean, activeMusicItem: MusicItem?) {
                 iconColor = playerButtonsColor,
                 enabled = hasPermission && (activeMusicItem != null),
                 onClick = {
-//                    player.
+                    println(player.isPlaying)
+                    player.playWhenReady = !player.isPlaying
                 }
             )
             DrawableIconButton(

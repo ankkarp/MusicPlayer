@@ -11,10 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.musicplayer.model.data.MusicItem
 import com.example.musicplayer.model.database.MusicDatabase
 import com.example.musicplayer.model.repository.MusicRepository
 import com.example.musicplayer.view.*
+import com.example.musicplayer.view.audioplayer.AudioPlayer
 import com.example.musicplayer.view.components.AppBar
 import com.example.musicplayer.view.components.MyContent
 import com.example.musicplayer.viewmodel.MusicViewModel
@@ -24,8 +27,17 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 
 class MainActivity : ComponentActivity() {
+//    private lateinit var playerView: StyledPlayerView
+//    private lateinit var exoPlayer: ExoPlayer
+
+//    var audioPlayer = AudioPlayer()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+//        exoPlayer = ExoPlayer.Builder(this).build()
+
+
         setContent {
             MainContent()
         }
@@ -61,12 +73,33 @@ fun MainContent() {
     if (musicList.isNotEmpty()) {
         println(musicList[0])
     }
-//    val player = remember { ExoPlayer.Builder(context).build() }
-//    musicList.forEach { player.addMediaItem(MediaItem.fromUri(it.uri)) }
-//    player.prepare()
-//    player.playWhenReady = true
+    println(musicList.map{it.uri})
+//    val player = mutableStateOf<MediaPlayer?>(null)
+//    val mediaSource = extractMediaSourceFromUri(Uri.parse("asset:///heart_attack.mp3"))
+//    val exoPlayer = ExoPlayerFactory.newSimpleInstance(
+//        baseContext, DefaultRenderersFactory(baseContext)
+//        , DefaultTrackSelector(),
+//        DefaultLoadControl()
+//    )
+//    exoPlayer.apply {
+//        // AudioAttributes here from exoplayer package !!!
+//        val attr = AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
+//            .setContentType(C.CONTENT_TYPE_MUSIC)
+//            .build()
+//        // In 2.9.X you don't need to manually handle audio focus :D
+//        setAudioAttributes(attr, true)
+//        prepare(mediaSource)
+//        // THAT IS ALL YOU NEED
+//        playWhenReady = true
+//    }
+    val context = LocalContext.current
+    val player = ExoPlayer.Builder(context).build()
+    musicList.forEach { player.addMediaItem(MediaItem.fromUri(it.uri)) }
+    player.prepare()
+    player.playWhenReady = true
 //    println("count: ${player.mediaItemCount}")
 //    println("state: ${player.playbackState == STATE_READY}")
+//    player.play()
 //    player.play()
 
 //    val player =  MediaPlayer.create(context, R.raw.audio)
@@ -88,13 +121,14 @@ fun MainContent() {
                         viewModel.setActive(activeMusicItem!!, false)
                     }
                     viewModel.setActive(musicItem, true)
-                }, musicList = musicList
+                }, musicList = musicList, activeMusicItem = activeMusicItem
             )
         },
         bottomBar = {
             PlayerBottomBar(
                 hasPermission = fsPermissionState.hasPermission,
                 activeMusicItem = activeMusicItem,
+                player = player
             )
         }
     )
