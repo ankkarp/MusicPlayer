@@ -13,10 +13,9 @@ import com.example.musicplayer.viewmodel.MusicViewModel
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun PlayListSelect() {
-    val options = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5")
+fun PlayListSelect(playlistNames: List<String>, selectedPlaylist: String,
+                   setPlaylist: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(options[0]) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -26,7 +25,7 @@ fun PlayListSelect() {
     ) {
         TextField(
             readOnly = true,
-            value = selectedOptionText,
+            value = selectedPlaylist,
             onValueChange = { },
             label = { Text("Label") },
             trailingIcon = {
@@ -46,14 +45,14 @@ fun PlayListSelect() {
                 expanded = false
             }
         ) {
-            options.forEach { selectionOption ->
+            playlistNames.forEach { selectedOption ->
                 DropdownMenuItem(
                     onClick = {
-                        selectedOptionText = selectionOption
+                        setPlaylist(selectedOption)
                         expanded = false
                     }
                 ) {
-                    Text(text = selectionOption)
+                    Text(text = selectedOption)
                 }
             }
         }
@@ -62,7 +61,8 @@ fun PlayListSelect() {
 
 
 @Composable
-fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
+fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean, playlistNames: List<String>,
+           selectedPlaylist: String, setPlaylist: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -72,7 +72,7 @@ fun AppBar(viewModel: MusicViewModel, hasPermission: Boolean) {
     ) {
         val mainContext = LocalContext.current
 
-        PlayListSelect()
+        PlayListSelect(playlistNames, selectedPlaylist, setPlaylist)
         Row {
             DrawableIconButton(
                 icon = R.drawable.ic_locate,

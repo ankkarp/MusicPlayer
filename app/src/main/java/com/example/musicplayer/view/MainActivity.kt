@@ -1,7 +1,6 @@
 package com.example.musicplayer.view
 
 //import com.google.accompanist.permissions.PermissionRequired
-import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +16,6 @@ import com.example.musicplayer.model.data.MusicItem
 import com.example.musicplayer.model.database.MusicDatabase
 import com.example.musicplayer.model.repository.MusicRepository
 import com.example.musicplayer.view.*
-import com.example.musicplayer.view.audioplayer.AudioPlayer
 import com.example.musicplayer.view.components.AppBar
 import com.example.musicplayer.view.components.MyContent
 import com.example.musicplayer.viewmodel.MusicViewModel
@@ -70,65 +68,74 @@ fun MainContent() {
     )
     val musicList by viewModel.allMusic.observeAsState(emptyList())
     val activeMusicItem by viewModel.activeMusicItem.observeAsState()
-    if (musicList.isNotEmpty()) {
-        println(musicList[0])
-    }
-    println(musicList.map{it.uri})
-//    val player = mutableStateOf<MediaPlayer?>(null)
-//    val mediaSource = extractMediaSourceFromUri(Uri.parse("asset:///heart_attack.mp3"))
-//    val exoPlayer = ExoPlayerFactory.newSimpleInstance(
-//        baseContext, DefaultRenderersFactory(baseContext)
-//        , DefaultTrackSelector(),
-//        DefaultLoadControl()
-//    )
-//    exoPlayer.apply {
-//        // AudioAttributes here from exoplayer package !!!
-//        val attr = AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
-//            .setContentType(C.CONTENT_TYPE_MUSIC)
-//            .build()
-//        // In 2.9.X you don't need to manually handle audio focus :D
-//        setAudioAttributes(attr, true)
-//        prepare(mediaSource)
-//        // THAT IS ALL YOU NEED
-//        playWhenReady = true
+//    if (activeMusicItem == null){
+//        viewModel.setActive(musicList[0], true)
 //    }
     val context = LocalContext.current
     val player = ExoPlayer.Builder(context).build()
-    musicList.forEach { player.addMediaItem(MediaItem.fromUri(it.uri)) }
+    var activeMusicItemIdx by remember { mutableStateOf(-1) }
+    if (musicList.isNotEmpty()) {
+        println(musicList[0])
+        println(musicList.map{it.uri})
+        musicList.forEach { player.addMediaItem(MediaItem.fromUri(it.uri)) }
+    }
     player.prepare()
-    player.playWhenReady = true
-//    println("count: ${player.mediaItemCount}")
-//    println("state: ${player.playbackState == STATE_READY}")
-//    player.play()
-//    player.play()
-
-//    val player =  MediaPlayer.create(context, R.raw.audio)
-//    mediaPlayer.setDataSource(musicList[0].uri)
-//    mediaPlayer.prepare()
-//    mediaPlayer.start()
-//    val player = MediaPlayer()
+    var playlistNames by remember { mutableStateOf(listOf("По умолчанию", "Очередь")) }
+    var selectedPlaylistName by remember { mutableStateOf(playlistNames[0]) }
+//    var queueMusicItems = ArrayList<MusicItem>()
 
     Scaffold(
         topBar = {
-            AppBar(viewModel, fsPermissionState.hasPermission)
+            AppBar(viewModel, fsPermissionState.hasPermission, playlistNames, selectedPlaylistName,
+            setPlaylist = { selectedOption: String ->
+                    selectedPlaylistName = selectedOption
+            })
         },
         backgroundColor = BackgroundColor,
         content = {
             MyContent(
                 fsPermissionState = fsPermissionState,
                 onItemClick = { musicItem: MusicItem ->
+                    activeMusicItemIdx = musicList.indexOf(musicItem)
+                    println(activeMusicItemIdx)
+                    player.playWhenReady = false
+                    player.seekTo(activeMusicItemIdx, 0)
+                    viewModel.setActive(musicItem, true)
+                    println("count: ${player.mediaItemCount}")
                     if (activeMusicItem != null) {
                         viewModel.setActive(activeMusicItem!!, false)
                     }
-                    viewModel.setActive(musicItem, true)
-                }, musicList = musicList, activeMusicItem = activeMusicItem
+                    player.playWhenReady = true
+                }, musicList = musicList, activeMusicItem = activeMusicItem,
+//                queueMusicItems = queueMusicItems,
+//                addToQueue = {musicItem : MusicItem -> queueMusicItems.add(musicItem)}
             )
         },
         bottomBar = {
             PlayerBottomBar(
                 hasPermission = fsPermissionState.hasPermission,
                 activeMusicItem = activeMusicItem,
-                player = player
+//                player = player,
+                play = {
+                    player.playWhenReady = !player.isPlaying
+                },
+                seekToNext = {
+                        if (activeMusicItem != null && activeMusicItemIdx < musicList.count() - 1) {
+                            viewModel.setActive(activeMusicItem!!, false)
+                            activeMusicItemIdx += 1
+                            player.seekTo(activeMusicItemIdx, 0)
+                            viewModel.setActive(musicList[activeMusicItemIdx], true)
+                        }
+                    },
+                seekToPrev = {
+                        if (activeMusicItem != null && activeMusicItemIdx > 0) {
+                            viewModel.setActive(activeMusicItem!!, false)
+                            activeMusicItemIdx -= 1
+                            player.seekTo(activeMusicItemIdx, 0)
+                            viewModel.setActive(musicList[activeMusicItemIdx], true)
+                        }
+                    },
+                player
             )
         }
     )
