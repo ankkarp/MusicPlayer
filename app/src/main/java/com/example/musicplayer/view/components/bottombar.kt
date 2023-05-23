@@ -171,13 +171,13 @@ fun PlayerSlider(player: ExoPlayer) {
 fun PlayerBottomBar(
     hasPermission: Boolean, activeMusicItem: MusicItem?,
     play: () -> Unit, seekToNext: () -> Unit, seekToPrev: () -> Unit,
-    player: ExoPlayer
+    player: ExoPlayer, isPlaying: Boolean
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(DimmerAccentColor1)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Text(
@@ -221,7 +221,7 @@ fun PlayerBottomBar(
                 onClick = { seekToPrev() }
             )
             DrawableIconButton(
-                icon = R.drawable.ic_play,
+                icon = if (isPlaying) R.drawable.ic_play else R.drawable.ic_pause,
                 iconSize = 32.dp,
                 iconColor = playerButtonsColor,
                 enabled = hasPermission && (activeMusicItem != null),

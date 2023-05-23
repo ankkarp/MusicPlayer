@@ -1,7 +1,9 @@
 package com.example.musicplayer.view
 
 //import com.google.accompanist.permissions.PermissionRequired
+import android.content.ContentUris
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -53,7 +55,7 @@ fun MainContent() {
         )
 
         systemUiController.setNavigationBarColor(
-            color = BackgroundColor,
+            color = DimmerAccentColor1,
         )
         onDispose {}
     }
@@ -72,7 +74,7 @@ fun MainContent() {
 //        viewModel.setActive(musicList[0], true)
 //    }
     val context = LocalContext.current
-    val player = ExoPlayer.Builder(context).build()
+    val player by remember { mutableStateOf(ExoPlayer.Builder(context).build()) }
     var activeMusicItemIdx by remember { mutableStateOf(-1) }
     if (musicList.isNotEmpty()) {
         println(musicList[0])
@@ -83,6 +85,7 @@ fun MainContent() {
     var playlistNames by remember { mutableStateOf(listOf("По умолчанию", "Очередь")) }
     var selectedPlaylistName by remember { mutableStateOf(playlistNames[0]) }
 //    var queueMusicItems = ArrayList<MusicItem>()
+    var isPlaying by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -98,14 +101,17 @@ fun MainContent() {
                 onItemClick = { musicItem: MusicItem ->
                     activeMusicItemIdx = musicList.indexOf(musicItem)
                     println(activeMusicItemIdx)
-                    player.playWhenReady = false
-                    player.seekTo(activeMusicItemIdx, 0)
+//                    player.playWhenReady = false
+//                    player.seekTo(activeMusicItemIdx, 0)
+                    player.setMediaItem(MediaItem.fromUri(musicItem.uri), 0)
+//                    player.prepare()
+//                    player.play()
+                    player.playWhenReady = true
                     viewModel.setActive(musicItem, true)
                     println("count: ${player.mediaItemCount}")
                     if (activeMusicItem != null) {
                         viewModel.setActive(activeMusicItem!!, false)
                     }
-                    player.playWhenReady = true
                 }, musicList = musicList, activeMusicItem = activeMusicItem,
 //                queueMusicItems = queueMusicItems,
 //                addToQueue = {musicItem : MusicItem -> queueMusicItems.add(musicItem)}
@@ -118,24 +124,28 @@ fun MainContent() {
 //                player = player,
                 play = {
                     player.playWhenReady = !player.isPlaying
+                    isPlaying = !isPlaying
                 },
                 seekToNext = {
-                        if (activeMusicItem != null && activeMusicItemIdx < musicList.count() - 1) {
+                        if (activeMusicItem != null && activeMusicItemIdx < musicList.count() - 2) {
                             viewModel.setActive(activeMusicItem!!, false)
                             activeMusicItemIdx += 1
-                            player.seekTo(activeMusicItemIdx, 0)
                             viewModel.setActive(musicList[activeMusicItemIdx], true)
+                            player.setMediaItem(MediaItem.fromUri(musicList[activeMusicItemIdx].uri), 0)
+                            player.playWhenReady = true
                         }
                     },
                 seekToPrev = {
                         if (activeMusicItem != null && activeMusicItemIdx > 0) {
                             viewModel.setActive(activeMusicItem!!, false)
                             activeMusicItemIdx -= 1
-                            player.seekTo(activeMusicItemIdx, 0)
                             viewModel.setActive(musicList[activeMusicItemIdx], true)
+                            player.setMediaItem(MediaItem.fromUri(musicList[activeMusicItemIdx].uri), 0)
+                            player.playWhenReady = true
+//                            player.seekTo(activeMusicItemIdx, 0)
                         }
                     },
-                player
+                player, isPlaying
             )
         }
     )
