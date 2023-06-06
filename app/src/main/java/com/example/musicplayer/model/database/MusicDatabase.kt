@@ -5,12 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.musicplayer.model.dao.MusicDao
+import com.example.musicplayer.model.dao.PlaylistDao
+import com.example.musicplayer.model.dao.PlaylistMusicDao
 import com.example.musicplayer.model.data.MusicItem
 
 @Database(entities = [(MusicItem::class)], version = 1, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
 
     abstract fun musicDao(): MusicDao
+//    abstract fun playlistDao(): PlaylistDao
+//    abstract fun playlistMusicDao(): PlaylistMusicDao
 
     companion object {
         @Volatile

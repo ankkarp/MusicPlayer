@@ -27,7 +27,7 @@ fun PlayListSelect(playlistNames: List<String>, selectedPlaylist: String,
             readOnly = true,
             value = selectedPlaylist,
             onValueChange = { },
-            label = { Text("Label") },
+            label = { Text("Плейлист") },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(
                     expanded = expanded
@@ -35,8 +35,11 @@ fun PlayListSelect(playlistNames: List<String>, selectedPlaylist: String,
             },
             colors = ExposedDropdownMenuDefaults.textFieldColors(
                 textColor = TextColor,
-                trailingIconColor = TextColor, focusedLabelColor = TextDimmerColor,
+                trailingIconColor = TextColor, focusedLabelColor = AccentColor2,
+                disabledTrailingIconColor = AccentColor2,
                 unfocusedLabelColor = TextDimmerColor,
+                focusedIndicatorColor = AccentColor2,
+                unfocusedIndicatorColor = AccentColor2,
             )
         )
         ExposedDropdownMenu(

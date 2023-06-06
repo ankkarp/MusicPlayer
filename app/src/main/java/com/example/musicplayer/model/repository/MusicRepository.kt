@@ -5,7 +5,7 @@ import com.example.musicplayer.model.data.MusicItem
 import kotlinx.coroutines.flow.Flow
 
 class MusicRepository(private val musicDao: MusicDao) {
-    val allMusic: Flow<List<MusicItem>> = musicDao.getAll()
+    val allMusic: Flow<List<MusicItem>> = musicDao.getAllMusic()
     val activeMusicItem : Flow<MusicItem> = musicDao.getActive()
 
     suspend fun insert(music: MusicItem) {

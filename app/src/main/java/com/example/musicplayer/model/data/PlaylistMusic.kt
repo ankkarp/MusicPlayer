@@ -3,9 +3,12 @@ package com.example.musicplayer.model.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "playlist")
-data class Playlist(
+
+@Entity(tableName = "playlist_music")
+data class PlaylistMusic(
     @PrimaryKey(autoGenerate = true)
     val id: Long,
-    val name: String,
+    val playlistId: Long,
+    val musicId: Long
 )
+

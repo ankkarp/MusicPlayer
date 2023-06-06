@@ -7,9 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.SliderDefaults
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,7 +122,7 @@ fun MyContent(
                 contentAlignment = Alignment.Center
             )
             {
-                Text("Добавьте музыку.")
+                Text("Добавьте музыку.", color = TextDimmerColor)
             }
         }
     } else {
@@ -138,7 +136,8 @@ fun MyContent(
             Column {
                 Button(
                     onClick = { fsPermissionState.launchPermissionRequest() },
-                    modifier = Modifier.width(200.dp)
+                    modifier = Modifier.width(200.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = AccentColor1),
                 ) {
                     Text("Предоставить доступ к памяти устройства")
                 }
